@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from app.database import Base, engine
 from app.seed import create_admin_user
+from app.models.meeting_model import Meeting
+from app.models.transcription_model import Transcription
+from app.models.analyses_model import Analysis
 
 app = FastAPI()
 

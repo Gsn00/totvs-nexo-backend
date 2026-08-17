@@ -1,8 +1,7 @@
 from app.database import Base
-from sqlalchemy import DateTime, JSON
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, JSON, Date
 from sqlalchemy.orm import Mapped, mapped_column
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from app.enums.meeting_status import MeetingStatus
 
 class Meeting(Base):
@@ -11,7 +10,6 @@ class Meeting(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     client: Mapped[str] = mapped_column(nullable=False)
     title: Mapped[str] = mapped_column(nullable=False)
-    date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     duration: Mapped[int] = mapped_column(nullable=False)
     participants: Mapped[dict] = mapped_column(JSON)
     status: Mapped[MeetingStatus] = mapped_column(nullable=False, default=MeetingStatus.PROCESSING)

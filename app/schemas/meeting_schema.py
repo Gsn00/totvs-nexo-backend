@@ -9,7 +9,6 @@ class MeetingResponse(BaseModel):
     id: int
     client: str
     title: str
-    duration: int
     participants: dict
     status: str
     created_at: str

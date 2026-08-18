@@ -32,7 +32,7 @@ class SentimentPointSchema(BaseModel):
 class MeetingAnalysisSchema(BaseModel):
     participants: List[str] = Field(description="Lista de participantes e seus cargos identificados")
     healthScore: int = Field(description="Score de 0 a 100 da saúde da reunião")
-    sentiment: str = Field(description="Sentimento geral: positivo, negativo ou neutro")
+    sentiment: str = Field(description="Sentimento geral: POSITIVE, NEGATIVE ou NEUTRAL (é importante que estejam maiúsculas)")
     transcript: List[TranscriptItemSchema] = Field(description="Apenas as falas cruciais com suas entidades marcadas")
     insights: InsightsSchema = Field(description="Bloco de insights estratégicos")
     sentimentData: List[SentimentPointSchema] = Field(description="Lista de 10 a 15 pontos estratégicos para o gráfico de humor")

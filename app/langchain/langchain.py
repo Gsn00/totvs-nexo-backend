@@ -31,6 +31,10 @@ class SentimentPointSchema(BaseModel):
 
 class MeetingAnalysisSchema(BaseModel):
     participants: List[str] = Field(description="Lista de participantes e seus cargos identificados")
+    totvs_speakers: List[str] = Field(description="Lista de locutores da TOTVS identificados. Quero apenas a identificação do locutor identico ao documento original, ex: LOCUTOR 1, LOCUTOR 2, etc. Não quero o nome real do funcionário da TOTVS")
+    client_speakers: List[str] = Field(description="Lista de locutores do cliente identificados. Quero apenas a identificação do locutor identico ao documento original, ex: LOCUTOR 1, LOCUTOR 2, etc. Não quero o nome real do funcionário do cliente")
+    upsell_opportunities: List[str] = Field(description="Lista de oportunidades de upsell identificadas")
+    churn_risk: int = Field(description="Score de 0 a 100 do risco de churn do cliente")
     healthScore: int = Field(description="Score de 0 a 100 da saúde da reunião")
     sentiment: str = Field(description="Sentimento geral: POSITIVE, NEGATIVE ou NEUTRAL (é importante que estejam maiúsculas)")
     transcript: List[TranscriptItemSchema] = Field(description="Apenas as falas cruciais com suas entidades marcadas")

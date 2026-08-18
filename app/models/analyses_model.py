@@ -12,6 +12,8 @@ class Analysis(Base):
     meeting_id: Mapped[int] = mapped_column(ForeignKey("meetings.id"), nullable=False)
     health_score: Mapped[float] = mapped_column()
     sentiment: Mapped[Sentiment] = mapped_column()
+    upsell_oportunities: Mapped[dict] = mapped_column(JSON)
+    churnk_risk: Mapped[int] = mapped_column()
     pain_points: Mapped[dict] = mapped_column(JSON)
     risk_factors: Mapped[dict] = mapped_column(JSON)
     highlights: Mapped[dict] = mapped_column(JSON)

@@ -31,10 +31,10 @@ class SentimentPointSchema(BaseModel):
 
 class MeetingAnalysisSchema(BaseModel):
     participants: List[str] = Field(description="Lista de participantes e seus cargos identificados")
-    totvs_speakers: List[str] = Field(description="Lista de locutores da TOTVS identificados. Quero apenas a identificação do locutor identico ao documento original, ex: LOCUTOR 1, LOCUTOR 2, etc. Não quero o nome real do funcionário da TOTVS")
-    client_speakers: List[str] = Field(description="Lista de locutores do cliente identificados. Quero apenas a identificação do locutor identico ao documento original, ex: LOCUTOR 1, LOCUTOR 2, etc. Não quero o nome real do funcionário do cliente")
-    upsell_opportunities: List[str] = Field(description="Lista de oportunidades de upsell identificadas")
-    churn_risk: int = Field(description="Score de 0 a 100 do risco de churn do cliente")
+    totvsSpeakers: List[str] = Field(description="Lista de locutores da TOTVS identificados. Quero apenas a identificação do locutor identico ao documento original, ex: LOCUTOR 1, LOCUTOR 2, etc. Não quero o nome real do funcionário da TOTVS")
+    clientSpeakers: List[str] = Field(description="Lista de locutores do cliente identificados. Quero apenas a identificação do locutor identico ao documento original, ex: LOCUTOR 1, LOCUTOR 2, etc. Não quero o nome real do funcionário do cliente")
+    upsellOpportunities: List[str] = Field(description="Lista de oportunidades de upsell identificadas")
+    churnRisk: int = Field(description="Score de 0 a 100 do risco de churn do cliente")
     healthScore: int = Field(description="Score de 0 a 100 da saúde da reunião")
     sentiment: str = Field(description="Sentimento geral: POSITIVE, NEGATIVE ou NEUTRAL (é importante que estejam maiúsculas)")
     transcript: List[TranscriptItemSchema] = Field(description="Apenas as falas cruciais com suas entidades marcadas")
@@ -61,6 +61,7 @@ class NexoEngine:
                 "3. Use porcentagens (ex: '25%', '50%') para os pontos intermediários.\n"
                 "4. Gere entre 10 a 15 pontos que mapeiem os momentos mais críticos de mudança de humor na conversa.\n"
                 "No campo 'transcript', inclua APENAS as falas que contêm entidades importantes (competitor, product, role, painPoint, churnRisk) e tente extrair no mínimo 10 falas. "
+                "Se alguma lista de output estiver vazia, retorne uma lista vazia. "
                 "Ignore conversas triviais.\n{format_instructions}"
             )),
             ("user", "Analise a transcrição abaixo:\n\n{transcription}")

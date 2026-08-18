@@ -6,7 +6,7 @@ from app.enums.sentiment import Sentiment
 
 
 class Analysis(Base):
-    __tablename__ = "analyses"
+    __tablename__ = "analysis"
     
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     meeting_id: Mapped[int] = mapped_column(ForeignKey("meetings.id"), nullable=False)

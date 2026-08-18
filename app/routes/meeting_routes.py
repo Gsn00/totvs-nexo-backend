@@ -1,9 +1,7 @@
-from xmlrpc import client
-
 from fastapi import APIRouter, Depends, Form
 from sqlalchemy.orm import Session
 from app.langchain.langchain import NexoEngine
-from app.models.analyses_model import Analysis
+from app.models.analysis_model import Analysis
 from app.models.meeting_model import Meeting
 from app.database import SessionLocal
 from app.services.pandas import process_transcription
@@ -53,6 +51,8 @@ def create_meeting(
         meeting_id=new_meeting.id,
         health_score=analysis_result["healthScore"],
         sentiment=analysis_result["sentiment"],
+        upsell_oportunities=analysis_result["upsellOpportunities"],
+        churnk_risk=analysis_result["churnRisk"],
         pain_points=analysis_result["insights"]["painPoints"],
         risk_factors=analysis_result["insights"]["riskPoints"],
         highlights=analysis_result["insights"]["positiveHighlights"],

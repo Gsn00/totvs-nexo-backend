@@ -3,7 +3,7 @@ from app.database import Base, engine
 from app.seed import create_admin_user
 from app.models.meeting_model import Meeting
 from app.models.transcription_model import Transcription
-from app.models.analyses_model import Analysis
+from app.models.analysis_model import Analysis
 from app.routes import meeting_routes
 
 app = FastAPI()

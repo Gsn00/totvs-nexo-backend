@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class EntitySchema(BaseModel):
-    type: str = Field(description="Tipo da entidade: competitor, product, role, painPoint ou churnRisk")
-    text: str = Field(description="O trecho exato do texto que representa essa entidade")
+    type: str = Field(description="Tipo da entidade: competitor, product, role, painPoint ou churnRisk. Product é o nome do produto da TOTVS, role é o cargo de algum funcionário da TOTVS, não de um cliente. PainPoint é uma dor do cliente, churnRisk é um risco de churn do cliente e competitor é o nome de algum concorrente da TOTVS")
+    text: str = Field(description="O trecho exato do texto que representa essa entidade. Deve ser o mais curto possível, mas ainda assim compreensível. Ex: 'Senior', 'TOTVS', 'ERP Protheus', 'Falta de suporte', 'Concorrência da Senior'. Exatamente como aparece na transcrição, incluindo maiúsculas e minúsculas.")
 
 class TranscriptItemSchema(BaseModel):
     speaker: str = Field(description="Identificador do locutor (ex: LOCUTOR 3)")
@@ -60,8 +60,13 @@ class NexoEngine:
                 "2. O último label (100%) deve ser 'Fechamento da Reunião' e alguma informação relevante sobre o resultado da reunião.\n"
                 "3. Use porcentagens (ex: '25%', '50%') para os pontos intermediários.\n"
                 "4. Gere entre 10 a 15 pontos que mapeiem os momentos mais críticos de mudança de humor na conversa.\n"
-                "No campo 'transcript', inclua APENAS as falas que contêm entidades importantes (competitor, product, role, painPoint, churnRisk) e tente extrair no mínimo 10 falas. "
-                "Se alguma lista de output estiver vazia, retorne uma lista vazia. "
+                "No campo 'transcript', inclua APENAS as falas que contêm entidades importantes (competitor, product, role, painPoint, churnRisk) e tente extrair no mínimo 10 falas.\n "
+                "O transcript contém speaker, text e entities. As entities devem ser extraídas do texto, não inventadas. Ex: se o locutor fala 'A Senior é uma concorrente da TOTVS', a entity deve ser 'type': 'competitor', 'text': 'Senior'. O texto da fala deve ser o mais curto possível, porém passando a informação essencial.\n "
+                "Se alguma lista de output estiver vazia, retorne uma lista vazia.\n "
+                "Principais produtos da TOTVS: Protheus, Datasul, RM, Logix, Backoffice, TOTVS CRM, RD Station, Tallos, Meu RH, Clockin, Atração de Talentos, Fluig, Carol, TOTVS Analytics, Agro, Saúde, Logística, Varejo, Educacional, Construção, Jurídico, Financial Services, Techfin.\n "
+                "Principais concorrentes da TOTVS: SAP, S/4HANA, Business One, Oracle, NetSuite, Fusion Cloud, Microsoft Dynamics 365, Business Central, Senior Sistemas, Omie, Bling, Alterdata, Mega Sistemas, LG Lugar de Gente, ADP, Ahgora, Flash, Salesforce, HubSpot, Pipedrive, Zoho.\n "
+                "Principais cargos da TOTVS: CEO, CFO, COO, CTO, CIO, CMO, CHRO, Executivo de Contas, Account Executive, Especialista de Soluções, Gerente Comercial, Diretor Comercial, SDR, BDR, Consultor de Negócios, Arquiteto de Soluções, Engenheiro de Software, Analista de Sistemas, Analista de Negócios, Analista de Implantação, Consultor de Suporte, Coordenador de Projetos, Customer Success Manager, CSM, Gerente de Projetos, Diretor de Tecnologia, Analista de Gente e Gestão, Business Partner, Gerente de Vendas, Gerente de Marketing, Gerente de Produto, Gerente de Suporte, Desenvolvedor de Software.\n "
+                "Apesar de você ter acesso a uma lista de concorrentes, produtos e cargos, não se limite a eles. "
                 "Ignore conversas triviais.\n{format_instructions}"
             )),
             ("user", "Analise a transcrição abaixo:\n\n{transcription}")

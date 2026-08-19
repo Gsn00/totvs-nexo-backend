@@ -35,15 +35,15 @@ def create_meeting(
     transcription = process_transcription(transcription)
 
     ##Enviando o texto processado para o LangChain para análise
-    #langchain = NexoEngine();
-    #analysis_result = langchain.analyze_transcription(transcription).model_dump()
+    langchain = NexoEngine();
+    analysis_result = langchain.analyze_transcription(transcription).model_dump()
 
     ##Carregando o resultado da análise do arquivo JSON para simular a resposta do LangChain
-    import json
-    from pathlib import Path
-    analysis_result = {}
-    with open(Path.home() / "Desktop" / "result.json", "r", encoding="utf-8") as file:
-        analysis_result = json.load(file)
+    #import json
+    #from pathlib import Path
+    #analysis_result = {}
+    #with open(Path.home() / "Desktop" / "result.json", "r", encoding="utf-8") as file:
+        #analysis_result = json.load(file)
 
     ###Criando a reunião, transcrição e análise no banco de dados
     new_meeting = Meeting(client=client, title=title, participants=analysis_result["participants"])

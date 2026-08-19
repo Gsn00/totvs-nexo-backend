@@ -36,6 +36,7 @@ def create_meeting(
     #langchain = NexoEngine();
     #analysis_result = langchain.analyze_transcription(transcription).model_dump()
 
+    ##Carregando o resultado da análise do arquivo JSON para simular a resposta do LangChain
     import json
     from pathlib import Path
     analysis_result = {}

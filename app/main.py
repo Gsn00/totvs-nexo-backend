@@ -4,11 +4,12 @@ from app.seed import create_admin_user
 from app.models.meeting_model import Meeting
 from app.models.transcription_model import Transcription
 from app.models.analysis_model import Analysis
-from app.routes import meeting_routes
+from app.routes import meeting_routes, auth_routes
 
 app = FastAPI()
 
 app.include_router(meeting_routes.router)
+app.include_router(auth_routes.router)
 
 @app.on_event("startup")
 def startup_event():

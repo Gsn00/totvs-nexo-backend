@@ -5,7 +5,7 @@ from app.langchain.langchain import NexoEngine
 from app.models.analysis_model import Analysis
 from app.models.meeting_model import Meeting
 from app.database import SessionLocal
-from app.services.jwt import decode_jwt_token, require_roles
+from app.services.jwt import require_roles
 from app.services.pandas import process_transcription
 from app.models.transcription_model import Transcription
 
@@ -24,7 +24,7 @@ def get_meetings(page: int = 1, limit: int = 10, db: Session = Depends(get_db)):
     meetings = db.query(Meeting).offset(offset).limit(limit).all()
     return meetings
 
-@router.post("", dependencies=[Depends(decode_jwt_token), Depends(require_roles(Role.USER, Role.ADMIN, Role.DEVELOPER))])
+@router.post("", dependencies=[Depends(require_roles(Role.USER, Role.ADMIN, Role.DEVELOPER))])
 def create_meeting(
     client: str = Form(...),
     title: str = Form(...),

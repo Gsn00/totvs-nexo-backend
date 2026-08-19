@@ -14,6 +14,7 @@ class Analysis(Base):
     sentiment: Mapped[Sentiment] = mapped_column()
     upsell_oportunities: Mapped[dict] = mapped_column(JSON)
     churnk_risk: Mapped[int] = mapped_column()
+    talk_to_listen_ratio: Mapped[float] = mapped_column()
     pain_points: Mapped[dict] = mapped_column(JSON)
     risk_factors: Mapped[dict] = mapped_column(JSON)
     highlights: Mapped[dict] = mapped_column(JSON)

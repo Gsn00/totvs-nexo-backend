@@ -33,8 +33,14 @@ def create_meeting(
     transcription = process_transcription(transcription)
 
     ##Enviando o texto processado para o LangChain para análise
-    langchain = NexoEngine();
-    analysis_result = langchain.analyze_transcription(transcription).model_dump()
+    #langchain = NexoEngine();
+    #analysis_result = langchain.analyze_transcription(transcription).model_dump()
+
+    import json
+    from pathlib import Path
+    analysis_result = {}
+    with open(Path.home() / "Desktop" / "result.json", "r", encoding="utf-8") as file:
+        analysis_result = json.load(file)
 
     ###Criando a reunião, transcrição e análise no banco de dados
     new_meeting = Meeting(client=client, title=title, participants=analysis_result["participants"])
@@ -47,12 +53,15 @@ def create_meeting(
     db.commit()
     db.refresh(new_transcription)
 
+    talk_to_listen_ratio = calculate_talk_to_listen_ratio(transcription, analysis_result["totvsSpeakers"], analysis_result["clientSpeakers"])
+
     new_analysis = Analysis(
         meeting_id=new_meeting.id,
         health_score=analysis_result["healthScore"],
         sentiment=analysis_result["sentiment"],
         upsell_oportunities=analysis_result["upsellOpportunities"],
         churnk_risk=analysis_result["churnRisk"],
+        talk_to_listen_ratio=talk_to_listen_ratio,
         pain_points=analysis_result["insights"]["painPoints"],
         risk_factors=analysis_result["insights"]["riskPoints"],
         highlights=analysis_result["insights"]["positiveHighlights"],
@@ -64,3 +73,19 @@ def create_meeting(
     db.refresh(new_analysis)
 
     return analysis_result
+
+def calculate_talk_to_listen_ratio(transcript: str, totvs_speakers: list, client_speakers: list):
+    totvs_words, client_words = 0, 0
+
+    for line in transcript.split("\\n"):
+        if any(line.startswith(f"[{speaker}]") for speaker in totvs_speakers):
+            totvs_words += len(line.split())
+        elif any(line.startswith(f"[{speaker}]") for speaker in client_speakers):
+            client_words += len(line.split())
+
+    total_words = totvs_words + client_words
+
+    if total_words == 0:
+        return 50.0
+
+    return totvs_words * 100 / total_words

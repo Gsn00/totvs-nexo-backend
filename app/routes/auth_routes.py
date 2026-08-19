@@ -32,7 +32,7 @@ def login_route(request: Request, form_data: OAuth2PasswordRequestForm = Depends
         raise HTTPException(status_code=401, detail="User not found or incorrect password")
 
     if verify_password(password, db_user.password_hash):
-        token = create_jwt_token(db_user.id)
+        token = create_jwt_token(db_user)
         return {"access_token": token, "token_type": "Bearer"}
     else:
         raise HTTPException(status_code=401, detail="User not found or incorrect password")

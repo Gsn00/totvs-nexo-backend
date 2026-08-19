@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models.user_model import User
 from app.services.security import hash_password
+from app.enums.role import Role
 
 load_dotenv()
 
@@ -19,7 +20,7 @@ def create_admin_user():
 
     password = hash_password(password)
 
-    new_user = User(name=name, email=email, password_hash=password, role="admin")
+    new_user = User(name=name, email=email, password_hash=password, role=Role.ADMIN)
 
     db.add(new_user)
     db.commit()

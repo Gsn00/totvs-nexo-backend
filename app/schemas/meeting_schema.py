@@ -1,8 +1,10 @@
 from pydantic import BaseModel
+from datetime import date
 
 class MeetingCreate(BaseModel):
     client: str
     title: str
+    date: date
     transcription: str
 
 class MeetingResponse(BaseModel):

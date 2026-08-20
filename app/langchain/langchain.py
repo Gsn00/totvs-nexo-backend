@@ -1,6 +1,6 @@
 import os
 import json
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -30,6 +30,8 @@ class SentimentPointSchema(BaseModel):
     label: str = Field(description="Uma frase curta explicando o que causou esse sentimento (ex: 'Risco: Avaliação da Senior')")
 
 class MeetingAnalysisSchema(BaseModel):
+    isAnalyzable: bool = Field(description="Define se o texto é uma reunião válida com informações suficientes para análise comercial.")
+    reasonForFailure: Optional[str] = Field(description="Caso is_analyzable seja falso, explique o motivo (ex: texto muito curto, assunto irrelevante, etc.)")
     participants: List[str] = Field(description="Lista de participantes e seus cargos identificados")
     totvsSpeakers: List[str] = Field(description="Lista de locutores da TOTVS identificados. Quero apenas a identificação do locutor identico ao documento original, ex: LOCUTOR 1, LOCUTOR 2, etc. Não quero o nome real do funcionário da TOTVS")
     clientSpeakers: List[str] = Field(description="Lista de locutores do cliente identificados. Quero apenas a identificação do locutor identico ao documento original, ex: LOCUTOR 1, LOCUTOR 2, etc. Não quero o nome real do funcionário do cliente")

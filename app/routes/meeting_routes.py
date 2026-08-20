@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, Form
+from datetime import date
+from fastapi import APIRouter, Depends, Form, HTTPException
 from sqlalchemy.orm import Session
 from app.enums.role import Role
 from app.langchain.langchain import NexoEngine
@@ -28,6 +29,7 @@ def get_meetings(page: int = 1, limit: int = 10, db: Session = Depends(get_db)):
 def create_meeting(
     client: str = Form(...),
     title: str = Form(...),
+    date: date = Form(...),
     transcription: str = Form(...),
     db: Session = Depends(get_db)
 ):
@@ -38,6 +40,9 @@ def create_meeting(
     langchain = NexoEngine();
     analysis_result = langchain.analyze_transcription(transcription).model_dump()
 
+    if analysis_result["isAnalyzable"] == False:
+        raise HTTPException(status_code=400, detail=f"Transcription is not analyzable: {analysis_result['reasonForFailure']}")
+
     ##Carregando o resultado da análise do arquivo JSON para simular a resposta do LangChain
     #import json
     #from pathlib import Path
@@ -46,7 +51,7 @@ def create_meeting(
         #analysis_result = json.load(file)
 
     ###Criando a reunião, transcrição e análise no banco de dados
-    new_meeting = Meeting(client=client, title=title, participants=analysis_result["participants"])
+    new_meeting = Meeting(client=client, title=title, date=date, participants=analysis_result["participants"])
     db.add(new_meeting)
     db.commit()
     db.refresh(new_meeting)

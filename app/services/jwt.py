@@ -20,7 +20,7 @@ def create_jwt_token(user):
         'sub': str(user.id),
         'email': user.email,
         'name': user.name,
-        'role': user.role,
+        'role': user.role.value,
         'exp': expire
     }
     encoded_jwt = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)

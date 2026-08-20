@@ -44,7 +44,7 @@ class MeetingAnalysisSchema(BaseModel):
     sentimentData: List[SentimentPointSchema] = Field(description="Lista de 10 a 15 pontos estratégicos para o gráfico de humor")
 
 class NexoEngine:
-    def __init__(self, model_name: str = "gemini-3.7-flash"):
+    def __init__(self, model_name: str = "gemini-3.6-flash"):
             self.llm = ChatGoogleGenerativeAI(
                 model=model_name,
                 temperature=0,
@@ -58,8 +58,8 @@ class NexoEngine:
                 "Você é um analista comercial sênior da TOTVS. "
                 "Sua missão é minerar uma transcrição e extrair inteligência acionável. "
                 "Ao gerar o 'sentimentData', siga estas regras:\n"
-                "1. O primeiro label (0%) deve conter 'Início da Reunião' e alguma informação relevante sobre o humor dos participantes.\n"
-                "2. O último label (100%) deve ser 'Fechamento da Reunião' e alguma informação relevante sobre o resultado da reunião.\n"
+                "1. O primeiro label (0%) deve conter time: 0% e label: 'Início da Reunião' e alguma informação relevante sobre o humor dos participantes.\n"
+                "2. O último label (100%) deve conter time: 100% e label: 'Fechamento da Reunião' e alguma informação relevante sobre o resultado da reunião.\n"
                 "3. Use porcentagens (ex: '25%', '50%') para os pontos intermediários.\n"
                 "4. Gere entre 10 a 15 pontos que mapeiem os momentos mais críticos de mudança de humor na conversa.\n"
                 "No campo 'transcript', inclua APENAS as falas que contêm entidades importantes (competitor, product, role, painPoint, churnRisk). As falas devem ser majoritariamente do cliente, com foco em informações estratégicas e com textos não muito longos.\n "

@@ -64,12 +64,14 @@ def process_meeting(meeting_id: int, transcription: str, db: Session):
         if not analysis_result:
             meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
             meeting.status = MeetingStatus.FAILED
+            meeting.errorMessage = "Failed to analyze transcription"
             db.commit()
             return
         
         if analysis_result["isAnalyzable"] == False:
             meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
             meeting.status = MeetingStatus.FAILED
+            meeting.errorMessage = analysis_result["reasonForFailure"]
             db.commit()
             return
 
@@ -102,9 +104,10 @@ def process_meeting(meeting_id: int, transcription: str, db: Session):
         meeting.status = MeetingStatus.COMPLETED
         db.commit()
         db.refresh(meeting)
-    except Exception:
+    except Exception as e:
         meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
         meeting.status = MeetingStatus.FAILED
+        meeting.errorMessage = str(e)
         db.commit()
 
 

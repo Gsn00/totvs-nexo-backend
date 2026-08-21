@@ -61,6 +61,13 @@ def process_meeting(meeting_id: int, transcription: str, db: Session):
         engine = NexoEngine()
         analysis_result = engine.analyze_transcription(transcription).model_dump()
 
+        ##Carregando o resultado da análise do arquivo JSON para simular a resposta do LangChain
+        #import json
+        #from pathlib import Path
+        #analysis_result = {}
+        #with open(Path.home() / "Desktop" / "result.json", "r", encoding="utf-8") as file:
+            #analysis_result = json.load(file)
+
         if not analysis_result:
             meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
             meeting.status = MeetingStatus.FAILED

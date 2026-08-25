@@ -27,6 +27,13 @@ def get_meetings(page: int = 1, limit: int = 10, db: Session = Depends(get_db)):
     meetings = db.query(Meeting).offset(offset).limit(limit).all()
     return meetings
 
+@router.get("/with-analysis", dependencies=[Depends(require_roles(Role.USER, Role.ADMIN, Role.DEVELOPER))])
+def get_meetings_with_analysis(page: int = 1, limit: int = 10, db: Session = Depends(get_db)):
+    offset = (page - 1) * limit
+    meetings = db.query(Meeting).join(Analysis).offset(offset).limit(limit).all()
+    analysis = db.query(Analysis).filter(Analysis.meeting_id.in_([meeting.id for meeting in meetings])).all()
+    return [{"meeting": meeting, "analysis": next((a for a in analysis if a.meeting_id == meeting.id), None)} for meeting in meetings]
+
 @router.get("/{meeting_id}/status", dependencies=[Depends(require_roles(Role.USER, Role.ADMIN, Role.DEVELOPER))])
 def get_meeting_status(meeting_id: int, db: Session = Depends(get_db)):
     meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()

@@ -45,12 +45,12 @@ class MeetingAnalysisSchema(BaseModel):
 
 class NexoEngine:
     def __init__(self, model_name: str = "gemini-3.6-flash"):
-            self.llm = ChatGoogleGenerativeAI(
-                model=model_name,
-                temperature=0,
-                google_api_key=os.getenv("GOOGLE_API_KEY")
-            )
-            self.parser = PydanticOutputParser(pydantic_object=MeetingAnalysisSchema)
+        self.llm = ChatGoogleGenerativeAI(
+            model=model_name,
+            temperature=0,
+            google_api_key=os.getenv("GOOGLE_API_KEY")
+        )
+        self.structured_llm = self.llm.with_structured_output(MeetingAnalysisSchema)
 
     def analyze_transcription(self, cleaned_text: str) -> MeetingAnalysisSchema:
         prompt_template = ChatPromptTemplate.from_messages([
@@ -69,15 +69,15 @@ class NexoEngine:
                 "Principais concorrentes da TOTVS: SAP, S/4HANA, Business One, Oracle, NetSuite, Fusion Cloud, Microsoft Dynamics 365, Business Central, Senior Sistemas, Omie, Bling, Alterdata, Mega Sistemas, LG Lugar de Gente, ADP, Ahgora, Flash, Salesforce, HubSpot, Pipedrive, Zoho.\n "
                 "Principais cargos da TOTVS: CEO, CFO, COO, CTO, CIO, CMO, CHRO, Executivo de Contas, Account Executive, Especialista de Soluções, Gerente Comercial, Diretor Comercial, SDR, BDR, Consultor de Negócios, Arquiteto de Soluções, Engenheiro de Software, Analista de Sistemas, Analista de Negócios, Analista de Implantação, Consultor de Suporte, Coordenador de Projetos, Customer Success Manager, CSM, Gerente de Projetos, Diretor de Tecnologia, Analista de Gente e Gestão, Business Partner, Gerente de Vendas, Gerente de Marketing, Gerente de Produto, Gerente de Suporte, Desenvolvedor de Software.\n "
                 "Apesar de você ter acesso a uma lista de concorrentes, produtos e cargos, não se limite a eles. "
-                "Ignore conversas triviais.\n{format_instructions}"
+                "Ignore conversas triviais."
             )),
             ("user", "Analise a transcrição abaixo:\n\n{transcription}")
         ])
 
-        chain = prompt_template | self.llm | self.parser
+        chain = prompt_template | self.structured_llm
         
         return chain.invoke({
-            "transcription": cleaned_text,
-            "format_instructions": self.parser.get_format_instructions()
+            "transcription": cleaned_text
         })
+
 

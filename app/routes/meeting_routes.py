@@ -40,7 +40,8 @@ def get_meeting_with_analysis(meeting_id: int, db: Session = Depends(get_db)):
     if not meeting:
         raise HTTPException(status_code=404, detail="Meeting not found")
     analysis = db.query(Analysis).filter(Analysis.meeting_id == meeting_id).first()
-    return {"meeting": meeting, "analysis": analysis}
+    transcript = db.query(Transcription).filter(Transcription.meeting_id == meeting_id).first()
+    return {"meeting": meeting, "analysis": analysis, "transcript": transcript.transcript}
 
 @router.get("/{meeting_id}/status", dependencies=[Depends(require_roles(Role.USER, Role.ADMIN, Role.DEVELOPER))])
 def get_meeting_status(meeting_id: int, db: Session = Depends(get_db)):

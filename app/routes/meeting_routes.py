@@ -34,6 +34,14 @@ def get_meetings_with_analysis(page: int = 1, limit: int = 10, db: Session = Dep
     analysis = db.query(Analysis).filter(Analysis.meeting_id.in_([meeting.id for meeting in meetings])).all()
     return [{"meeting": meeting, "analysis": next((a for a in analysis if a.meeting_id == meeting.id), None)} for meeting in meetings]
 
+@router.get("/{meeting_id}/with-analysis", dependencies=[Depends(require_roles(Role.USER, Role.ADMIN, Role.DEVELOPER))])
+def get_meeting_with_analysis(meeting_id: int, db: Session = Depends(get_db)):
+    meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    analysis = db.query(Analysis).filter(Analysis.meeting_id == meeting_id).first()
+    return {"meeting": meeting, "analysis": analysis}
+
 @router.get("/{meeting_id}/status", dependencies=[Depends(require_roles(Role.USER, Role.ADMIN, Role.DEVELOPER))])
 def get_meeting_status(meeting_id: int, db: Session = Depends(get_db)):
     meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()

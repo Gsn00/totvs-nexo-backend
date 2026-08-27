@@ -1,7 +1,14 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
+from datetime import datetime
+from app.enums.role import Role
 
-class UserCreate(BaseModel):
+class UserResponse(BaseModel):
+    id: int
     name: str
     email: str
-    password: str
-    role: str
+    role: Role
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True

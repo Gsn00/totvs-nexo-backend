@@ -11,6 +11,10 @@ from app.services.pandas import process_transcription
 from app.models.transcription_model import Transcription
 from fastapi import BackgroundTasks
 from app.enums.meeting_status import MeetingStatus
+import time
+import traceback
+from app.models.system_log_model import SystemLog
+import time
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 
@@ -69,42 +73,48 @@ def create_meeting(
     return {"id": new_meeting.id, "status": new_meeting.status}
 
 def process_meeting(meeting_id: int, transcription: str, db: Session):
+    start_time = time.time()
     try:
-        # Process the transcription with the pandas service
-        transcription = process_transcription(transcription)
+        # Processa com pandas
+        transcription_processed = process_transcription(transcription)
 
-        # Process the transcription with the NexoEngine
+        # Processa com a IA
         engine = NexoEngine()
-        analysis_result = engine.analyze_transcription(transcription).model_dump()
+        analysis_result = engine.analyze_transcription(transcription_processed).model_dump()
 
-        ##Carregando o resultado da análise do arquivo JSON para simular a resposta do LangChain
-        #import json
-        #from pathlib import Path
-        #analysis_result = {}
-        #with open(Path.home() / "Desktop" / "result.json", "r", encoding="utf-8") as file:
-            #analysis_result = json.load(file)
-
-        if not analysis_result:
+        if not analysis_result or analysis_result.get("isAnalyzable") == False:
+            reason = analysis_result.get("reasonForFailure", "Failed to analyze transcription") if analysis_result else "Empty result"
+            
             meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
             meeting.status = MeetingStatus.FAILED
-            meeting.errorMessage = "Failed to analyze transcription"
-            db.commit()
-            return
-        
-        if analysis_result["isAnalyzable"] == False:
-            meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
-            meeting.status = MeetingStatus.FAILED
-            meeting.errorMessage = analysis_result["reasonForFailure"]
+            meeting.errorMessage = reason
+            
+            # Registra log do sistema
+            log_entry = SystemLog(
+                level="WARNING",
+                source="NexoEngine",
+                message=f"Falha na análise da reunião #{meeting_id}: {reason}"
+            )
+            db.add(log_entry)
             db.commit()
             return
 
-        talk_to_listen_ratio = calculate_talk_to_listen_ratio(transcription, analysis_result["totvsSpeakers"], analysis_result["clientSpeakers"])
+        execution_time = round(time.time() - start_time, 2)
+        talk_to_listen_ratio = calculate_talk_to_listen_ratio(
+            transcription_processed, 
+            analysis_result["totvsSpeakers"], 
+            analysis_result["clientSpeakers"]
+        )
 
-        new_transcription = Transcription(meeting_id=meeting_id, raw_text=transcription, transcript=analysis_result["transcript"])
+        # Salva transcrição
+        new_transcription = Transcription(
+            meeting_id=meeting_id, 
+            raw_text=transcription_processed, 
+            transcript=analysis_result["transcript"]
+        )
         db.add(new_transcription)
-        db.commit()
-        db.refresh(new_transcription)
 
+        # Salva análise
         new_analysis = Analysis(
             meeting_id=meeting_id,
             health_score=analysis_result["healthScore"],
@@ -116,22 +126,44 @@ def process_meeting(meeting_id: int, transcription: str, db: Session):
             risk_factors=analysis_result["insights"]["riskPoints"],
             highlights=analysis_result["insights"]["positiveHighlights"],
             suggestions=analysis_result["insights"]["aiSuggestions"],
-            sentiment_timeline=analysis_result["sentimentData"]
+            sentiment_timeline=analysis_result["sentimentData"],
+            execution_time=execution_time
         )
         db.add(new_analysis)
-        db.commit()
-        db.refresh(new_analysis)
 
         meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
         meeting.participants = analysis_result["participants"]
         meeting.status = MeetingStatus.COMPLETED
+        
+        # Log de sucesso com tempo de execução
+        db.add(SystemLog(
+            level="INFO",
+            source="NexoEngine",
+            message=f"Reunião #{meeting_id} processada com sucesso em {execution_time}s"
+        ))
+
         db.commit()
-        db.refresh(meeting)
+
     except Exception as e:
+        db.rollback()
+        error_msg = str(e)
+        stack_trace = traceback.format_exc()
+
         meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
-        meeting.status = MeetingStatus.FAILED
-        meeting.errorMessage = str(e)
+        if meeting:
+            meeting.status = MeetingStatus.FAILED
+            meeting.errorMessage = error_msg
+
+        # Registra o erro detalhado no banco de dados
+        db.add(SystemLog(
+            level="ERROR",
+            source="NexoEngine",
+            message=f"Erro crítico no processamento da reunião #{meeting_id}",
+            detail=stack_trace
+        ))
         db.commit()
+    finally:
+        db.close()
 
 
 def calculate_talk_to_listen_ratio(transcript: str, totvs_speakers: list, client_speakers: list):

@@ -44,7 +44,7 @@ class MeetingAnalysisSchema(BaseModel):
     sentimentData: List[SentimentPointSchema] = Field(description="Lista de 10 a 15 pontos estratégicos para o gráfico de humor")
 
 class NexoEngine:
-    def __init__(self, model_name: str = "gemini-3.5-flash"):
+    def __init__(self, model_name: str = "gemini-3.6-flash"):
         self.llm = ChatGoogleGenerativeAI(
             model=model_name,
             temperature=0,

@@ -129,7 +129,7 @@ def delete_meeting(meeting_id: int, db: Session = Depends(get_db), current_user:
         source="Meetings",
         message=f"Reunião {meeting_info} foi excluída por '{current_user.email}'"
     )
-    
+
     return None
 
 def process_meeting(meeting_id: int, transcription: str, db: Session):
@@ -153,7 +153,7 @@ def process_meeting(meeting_id: int, transcription: str, db: Session):
             log_entry = SystemLog(
                 level="WARNING",
                 source="NexoEngine",
-                message=f"Falha na análise da reunião #{meeting_id}: {reason}"
+                message=f"Falha na análise da reunião #{meeting_id}: {reason} (modelo usado: {engine.llm.model})",
             )
             db.add(log_entry)
             db.commit()
@@ -187,7 +187,8 @@ def process_meeting(meeting_id: int, transcription: str, db: Session):
             highlights=analysis_result["insights"]["positiveHighlights"],
             suggestions=analysis_result["insights"]["aiSuggestions"],
             sentiment_timeline=analysis_result["sentimentData"],
-            execution_time=execution_time
+            execution_time=execution_time,
+            model_name=engine.llm.model
         )
         db.add(new_analysis)
 
@@ -199,7 +200,7 @@ def process_meeting(meeting_id: int, transcription: str, db: Session):
         db.add(SystemLog(
             level="INFO",
             source="NexoEngine",
-            message=f"Reunião #{meeting_id} processada com sucesso em {execution_time}s"
+            message=f"Reunião #{meeting_id} processada com sucesso em {execution_time}s usando o modelo {engine.llm.model}"
         ))
 
         db.commit()

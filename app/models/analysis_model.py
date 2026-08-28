@@ -1,5 +1,5 @@
 from app.database import Base
-from sqlalchemy import JSON, Float, ForeignKey, DateTime, func
+from sqlalchemy import JSON, Float, ForeignKey, DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
 from app.enums.sentiment import Sentiment
@@ -21,5 +21,6 @@ class Analysis(Base):
     suggestions: Mapped[dict] = mapped_column(JSON)
     sentiment_timeline: Mapped[dict] = mapped_column(JSON)
     execution_time: Mapped[float] = mapped_column(Float, nullable=True)
+    model_name: Mapped[str] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now(), onupdate=func.now())

@@ -32,13 +32,34 @@ def get_system_metrics(db: Session = Depends(get_db)):
     success_rate = round((completed / total_meetings * 100), 1) if total_meetings > 0 else 0.0
     avg_latency = db.query(func.avg(Analysis.execution_time)).scalar() or 0.0
 
+    model_stats_query = (
+        db.query(
+            Analysis.model_name,
+            func.avg(Analysis.execution_time).label("avg_time"),
+            func.count(Analysis.id).label("total_analyses")
+        )
+        .filter(Analysis.model_name.isnot(None))
+        .group_by(Analysis.model_name)
+        .all()
+    )
+
+    model_metrics = [
+        {
+            "model_name": stat.model_name or "Desconhecido",
+            "avg_latency_seconds": round(float(stat.avg_time or 0.0), 2),
+            "total_analyses": stat.total_analyses
+        }
+        for stat in model_stats_query
+    ]
+
     return {
         "total_meetings": total_meetings,
         "completed_count": completed,
         "failed_count": failed,
         "processing_count": processing,
         "success_rate": success_rate,
-        "avg_latency_seconds": round(float(avg_latency), 2)
+        "avg_latency_seconds": round(float(avg_latency), 2),
+        "model_metrics": model_metrics
     }
 
 # Endpoint de Logs Paginado (20 itens por padrão)
@@ -49,11 +70,9 @@ def get_system_logs(page: int = 1, limit: int = 20, level: str = None, db: Sessi
     if level and level != "ALL":
         query = query.filter(SystemLog.level == level)
     
-    # Contagem total de logs para a paginação
     total_logs = query.count()
     total_pages = math.ceil(total_logs / limit) if total_logs > 0 else 1
     
-    # Busca paginada
     offset = (page - 1) * limit
     logs = query.order_by(SystemLog.created_at.desc()).offset(offset).limit(limit).all()
     
@@ -61,6 +80,7 @@ def get_system_logs(page: int = 1, limit: int = 20, level: str = None, db: Sessi
     for log in logs:
         meeting_title = None
         client_name = None
+        model_used = None
         
         if "reunião #" in log.message.lower() or "reunião #" in (log.detail or "").lower():
             try:
@@ -72,6 +92,9 @@ def get_system_logs(page: int = 1, limit: int = 20, level: str = None, db: Sessi
                     if meeting:
                         meeting_title = meeting.title
                         client_name = meeting.client
+                        analysis = db.query(Analysis).filter(Analysis.meeting_id == m_id).first()
+                        if analysis:
+                            model_used = analysis.model_name
             except Exception:
                 pass
 
@@ -83,7 +106,8 @@ def get_system_logs(page: int = 1, limit: int = 20, level: str = None, db: Sessi
             "detail": log.detail,
             "created_at": log.created_at.isoformat(),
             "client": client_name,
-            "meeting_title": meeting_title
+            "meeting_title": meeting_title,
+            "model_used": model_used
         })
 
     return {

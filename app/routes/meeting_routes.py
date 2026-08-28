@@ -7,7 +7,8 @@ from app.langchain.langchain import NexoEngine
 from app.models.analysis_model import Analysis
 from app.models.meeting_model import Meeting
 from app.database import SessionLocal
-from app.services.jwt import require_roles
+from app.models.user_model import User
+from app.services.jwt import get_current_user, require_roles
 from app.services.pandas import process_transcription
 from app.models.transcription_model import Transcription
 from fastapi import BackgroundTasks
@@ -16,6 +17,7 @@ import time
 import traceback
 from app.models.system_log_model import SystemLog
 import time
+from app.services.logger import log_system_event
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 
@@ -88,29 +90,46 @@ def create_meeting(
     title: str = Form(...),
     date: date = Form(...),
     transcription: str = Form(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    new_meeting = Meeting(client=client, title=title, date=date)
+    new_meeting = Meeting(client=client, title=title, date=date, user_id=current_user.id)
     db.add(new_meeting)
     db.commit()
     db.refresh(new_meeting)
+
+    log_system_event(
+        db=db,
+        level="INFO",
+        source="Meetings",
+        message=f"Nova reunião #{new_meeting.id} ('{title}' - {client}) criada por '{current_user.email}'"
+    )
 
     background_tasks.add_task(process_meeting, new_meeting.id, transcription, db)
 
     return {"id": new_meeting.id, "status": new_meeting.status}
 
 @router.delete("/{meeting_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[admin_or_dev])
-def delete_meeting(meeting_id: int, db: Session = Depends(get_db)):
+def delete_meeting(meeting_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
     if not meeting:
         raise HTTPException(status_code=404, detail="Reunião não encontrada")
 
+    meeting_info = f"#{meeting.id} ('{meeting.title}' - {meeting.client})"
+
     # Deleta registros associados
     db.query(Analysis).filter(Analysis.meeting_id == meeting_id).delete()
     db.query(Transcription).filter(Transcription.meeting_id == meeting_id).delete()
-    
     db.delete(meeting)
     db.commit()
+
+    log_system_event(
+        db=db,
+        level="WARNING",
+        source="Meetings",
+        message=f"Reunião {meeting_info} foi excluída por '{current_user.email}'"
+    )
+    
     return None
 
 def process_meeting(meeting_id: int, transcription: str, db: Session):

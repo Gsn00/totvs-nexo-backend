@@ -16,5 +16,6 @@ class Meeting(Base):
     participants: Mapped[dict] = mapped_column(JSON, default=[])
     status: Mapped[MeetingStatus] = mapped_column(nullable=False, default=MeetingStatus.PROCESSING)
     errorMessage: Mapped[Optional[str]] = mapped_column(nullable=True)
+    user_id: Mapped[int] = mapped_column(nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

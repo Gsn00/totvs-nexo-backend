@@ -1,5 +1,6 @@
 from datetime import date
-from fastapi import APIRouter, Depends, Form, HTTPException
+import math
+from fastapi import APIRouter, Depends, Form, HTTPException, status
 from sqlalchemy.orm import Session
 from app.enums.role import Role
 from app.langchain.langchain import NexoEngine
@@ -25,18 +26,44 @@ def get_db():
     finally:
         db.close()
 
+admin_or_dev = Depends(require_roles(Role.ADMIN, Role.DEVELOPER))
+
 @router.get("", dependencies=[Depends(require_roles(Role.USER, Role.ADMIN, Role.DEVELOPER))])
 def get_meetings(page: int = 1, limit: int = 10, db: Session = Depends(get_db)):
     offset = (page - 1) * limit
     meetings = db.query(Meeting).offset(offset).limit(limit).all()
     return meetings
 
-@router.get("/with-analysis", dependencies=[Depends(require_roles(Role.USER, Role.ADMIN, Role.DEVELOPER))])
-def get_meetings_with_analysis(page: int = 1, limit: int = 10, db: Session = Depends(get_db)):
+@router.get("/with-analysis")
+def get_meetings_with_analysis(
+    page: int = 1,
+    limit: int = 10,
+    db: Session = Depends(get_db)
+):
+    # Oculta reuniões que falharam no histórico normal
+    query = db.query(Meeting).filter(Meeting.status != MeetingStatus.FAILED)
+    
+    total_meetings = query.count()
+    total_pages = math.ceil(total_meetings / limit) if total_meetings > 0 else 1
+
     offset = (page - 1) * limit
-    meetings = db.query(Meeting).join(Analysis).offset(offset).limit(limit).all()
-    analysis = db.query(Analysis).filter(Analysis.meeting_id.in_([meeting.id for meeting in meetings])).all()
-    return [{"meeting": meeting, "analysis": next((a for a in analysis if a.meeting_id == meeting.id), None)} for meeting in meetings]
+    meetings = query.order_by(Meeting.created_at.desc()).offset(offset).limit(limit).all()
+
+    meetings_with_analysis = []
+    for meeting in meetings:
+        analysis = db.query(Analysis).filter(Analysis.meeting_id == meeting.id).first()
+        meetings_with_analysis.append({
+            "meeting": meeting,
+            "analysis": analysis
+        })
+
+    return {
+        "items": meetings_with_analysis,
+        "total_meetings": total_meetings,
+        "total_pages": total_pages,
+        "current_page": page,
+        "limit": limit
+    }
 
 @router.get("/{meeting_id}/with-analysis", dependencies=[Depends(require_roles(Role.USER, Role.ADMIN, Role.DEVELOPER))])
 def get_meeting_with_analysis(meeting_id: int, db: Session = Depends(get_db)):
@@ -71,6 +98,20 @@ def create_meeting(
     background_tasks.add_task(process_meeting, new_meeting.id, transcription, db)
 
     return {"id": new_meeting.id, "status": new_meeting.status}
+
+@router.delete("/{meeting_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[admin_or_dev])
+def delete_meeting(meeting_id: int, db: Session = Depends(get_db)):
+    meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Reunião não encontrada")
+
+    # Deleta registros associados
+    db.query(Analysis).filter(Analysis.meeting_id == meeting_id).delete()
+    db.query(Transcription).filter(Transcription.meeting_id == meeting_id).delete()
+    
+    db.delete(meeting)
+    db.commit()
+    return None
 
 def process_meeting(meeting_id: int, transcription: str, db: Session):
     start_time = time.time()

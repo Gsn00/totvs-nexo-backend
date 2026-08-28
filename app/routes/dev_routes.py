@@ -1,3 +1,4 @@
+import math
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -20,7 +21,7 @@ def get_db():
 
 dev_only = Depends(require_roles(Role.DEVELOPER, Role.ADMIN))
 
-# 1. Métricas do Sistema & IA
+# Métricas da IA / Sistema
 @router.get("/metrics", dependencies=[dev_only])
 def get_system_metrics(db: Session = Depends(get_db)):
     total_meetings = db.query(Meeting).count()
@@ -40,15 +41,21 @@ def get_system_metrics(db: Session = Depends(get_db)):
         "avg_latency_seconds": round(float(avg_latency), 2)
     }
 
-# 2. Obter Logs com Título e Cliente da Reunião
+# Endpoint de Logs Paginado (20 itens por padrão)
 @router.get("/logs", dependencies=[dev_only])
-def get_system_logs(page: int = 1, limit: int = 30, level: str = None, db: Session = Depends(get_db)):
+def get_system_logs(page: int = 1, limit: int = 20, level: str = None, db: Session = Depends(get_db)):
     query = db.query(SystemLog)
     
     if level and level != "ALL":
         query = query.filter(SystemLog.level == level)
     
-    logs = query.order_by(SystemLog.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
+    # Contagem total de logs para a paginação
+    total_logs = query.count()
+    total_pages = math.ceil(total_logs / limit) if total_logs > 0 else 1
+    
+    # Busca paginada
+    offset = (page - 1) * limit
+    logs = query.order_by(SystemLog.created_at.desc()).offset(offset).limit(limit).all()
     
     response_logs = []
     for log in logs:
@@ -79,4 +86,10 @@ def get_system_logs(page: int = 1, limit: int = 30, level: str = None, db: Sessi
             "meeting_title": meeting_title
         })
 
-    return response_logs
+    return {
+        "logs": response_logs,
+        "total_logs": total_logs,
+        "total_pages": total_pages,
+        "current_page": page,
+        "limit": limit
+    }

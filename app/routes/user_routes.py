@@ -1,3 +1,5 @@
+import math
+
 from fastapi import APIRouter, Depends, Form, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -34,10 +36,27 @@ def verify_and_normalize_email(email_str: str) -> str:
             detail=f"Formato de e-mail inválido: {str(e)}"
         )
 
-@router.get("", response_model=List[UserResponse], dependencies=[admin_developer_only])
+admin_or_dev = Depends(require_roles(Role.ADMIN, Role.DEVELOPER))
+
+@router.get("", dependencies=[admin_or_dev])
 def get_users(page: int = 1, limit: int = 10, db: Session = Depends(get_db)):
+    query = db.query(User)
+    
+    # Contagem total de usuários
+    total_users = query.count()
+    total_pages = math.ceil(total_users / limit) if total_users > 0 else 1
+    
+    # Busca paginada
     offset = (page - 1) * limit
-    return db.query(User).offset(offset).limit(limit).all()
+    users = query.order_by(User.created_at.desc()).offset(offset).limit(limit).all()
+
+    return {
+        "users": users,
+        "total_users": total_users,
+        "total_pages": total_pages,
+        "current_page": page,
+        "limit": limit
+    }
 
 @router.get("/{user_id}", response_model=UserResponse, dependencies=[admin_developer_only])
 def get_user_by_id(user_id: int, db: Session = Depends(get_db)):

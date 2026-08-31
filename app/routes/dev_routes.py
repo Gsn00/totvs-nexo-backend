@@ -9,6 +9,7 @@ from app.models.system_log_model import SystemLog
 from app.enums.meeting_status import MeetingStatus
 from app.enums.role import Role
 from app.services.jwt import require_roles
+from app.services.date_parser import to_utc_iso
 
 router = APIRouter(prefix="/dev", tags=["developer"])
 
@@ -104,7 +105,7 @@ def get_system_logs(page: int = 1, limit: int = 20, level: str = None, db: Sessi
             "source": log.source,
             "message": log.message,
             "detail": log.detail,
-            "created_at": log.created_at.isoformat(),
+            "created_at": to_utc_iso(log.created_at),
             "client": client_name,
             "meeting_title": meeting_title,
             "model_used": model_used

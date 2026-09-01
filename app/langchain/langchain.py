@@ -16,7 +16,7 @@ class EntitySchema(BaseModel):
 class TranscriptItemSchema(BaseModel):
     speaker: str = Field(description="Identificador do locutor (ex: LOCUTOR 3)")
     text: str = Field(description="A fala completa de onde a informação foi extraída")
-    entities: List[EntitySchema] = Field(description="Lista de entidades identificadas nesta fala")
+    entities: List[EntitySchema] = Field(description="Lista de entidades identificadas nesta fala. O text do EntitySchema deve ser um trecho do text desta fala, não inventado. Se não houver entidades, retorne uma lista vazia.")
 
 class InsightsSchema(BaseModel):
     painPoints: List[str] = Field(description="Lista de dores identificadas")
@@ -32,7 +32,7 @@ class SentimentPointSchema(BaseModel):
 class MeetingAnalysisSchema(BaseModel):
     isAnalyzable: bool = Field(description="Define se o texto é uma reunião válida com informações suficientes para análise comercial.")
     reasonForFailure: Optional[str] = Field(description="Caso is_analyzable seja falso, explique o motivo (ex: texto muito curto, assunto irrelevante, etc.)")
-    participants: List[str] = Field(description="Lista de participantes e seus cargos identificados")
+    participants: List[str] = Field(description="Lista de participantes e seus cargos identificados. O formato deve ser 'IDENTIFICACAO - CARGO'. Ex: 'LOCUTOR 102 - CEO', 'LOCUTOR 53 - Gerente Comercial'. Não quero o nome real do funcionário da TOTVS, apenas a identificação do locutor identico ao documento original, ex: LOCUTOR 1, LOCUTOR 2, etc. O cargo deve ser o cargo real do funcionário da TOTVS, não inventado. Se não for possível identificar o cargo, apenas retorne a identificação do locutor (ex: 'LOCUTOR 102').")
     totvsSpeakers: List[str] = Field(description="Lista de locutores da TOTVS identificados. Quero apenas a identificação do locutor identico ao documento original, ex: LOCUTOR 1, LOCUTOR 2, etc. Não quero o nome real do funcionário da TOTVS")
     clientSpeakers: List[str] = Field(description="Lista de locutores do cliente identificados. Quero apenas a identificação do locutor identico ao documento original, ex: LOCUTOR 1, LOCUTOR 2, etc. Não quero o nome real do funcionário do cliente")
     upsellOpportunities: List[str] = Field(description="Lista de oportunidades de upsell identificadas")

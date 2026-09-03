@@ -1,10 +1,8 @@
 import os
-import json
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser
 from dotenv import load_dotenv
 
 load_dotenv()

@@ -18,6 +18,7 @@ import traceback
 from app.models.system_log_model import SystemLog
 import time
 from app.services.logger import log_system_event
+from app.langchain.rag_service import MeetingRAGService
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 
@@ -137,6 +138,13 @@ def process_meeting(meeting_id: int, transcription: str, db: Session):
     try:
         # Processa com pandas
         transcription_processed = process_transcription(transcription)
+
+        # Salva no banco vetorializado (Qdrant)
+        rag = MeetingRAGService()
+        rag.ingest_transcription(
+            meeting_id=meeting_id, 
+            transcription_text=transcription_processed
+        )
 
         # Processa com a IA
         engine = NexoEngine()

@@ -38,7 +38,7 @@ class MeetingRAGService:
         self,
         llm_model: str = "gemini-3.5-flash",
         classifier_model: str = "gemini-3.5-flash-lite",
-        embedding_model: str = "gemini-embedding-2-preview",
+        embedding_model: str = "gemini-embedding-001",
         collection_name: str = "meeting_transcriptions",
     ):
         self.api_key = os.getenv("GOOGLE_API_KEY")
@@ -103,12 +103,14 @@ class MeetingRAGService:
             model=llm_model,
             temperature=0.2,
             google_api_key=self.api_key,
+            thinking_level="low",
+            max_output_tokens=1000,
         )
 
         # 6. LLM Classificador Leve (Gemini 3.5 Flash Lite para Roteamento)
         self.classifier_llm_instance = ChatGoogleGenerativeAI(
             model=classifier_model,
-            temperature=0.0,  # Zero temperatura para maior determinismo
+            temperature=0.0,
             google_api_key=self.api_key,
         )
         self.classifier_llm = self.classifier_llm_instance.with_structured_output(QueryClassification)
@@ -157,11 +159,11 @@ class MeetingRAGService:
             for idx, chunk in enumerate(chunks)
         ]
 
-        batch_size = 10
+        batch_size = 20
         for i in range(0, len(documents), batch_size):
             batch = documents[i : i + batch_size]
             self.vector_store.add_documents(batch)
-            time.sleep(2.0)
+            time.sleep(1.0)
 
         return len(documents)
 
@@ -235,9 +237,15 @@ class MeetingRAGService:
 
         rag_prompt = ChatPromptTemplate.from_messages([
             ("system", (
-                "Você é um assistente comercial da TOTVS especializado em analisar reuniões corporativas.\n"
-                "Responda à dúvida do usuário utilizando ESTRITAMENTE o contexto abaixo.\n"
-                "Se a resposta não puder ser confirmada pelo contexto fornecido, diga educadamente que essa informação não consta na transcrição.\n\n"
+                "Você é o assistente virtual de inteligência artificial da TOTVS, especializado em análise e extração de dados de reuniões corporativas.\n\n"
+                "Seu objetivo é responder às dúvidas do usuário analisando o histórico de conversas entre a equipe da TOTVS e o cliente.\n"
+                "Para fornecer uma resposta precisa e contextualizada, identifique pela linguagem e pelos papéis no contexto se as falas, dúvidas, exigências ou compromissos partem dos representantes da TOTVS ou do cliente.\n\n"
+                "Instruções estritas:\n"
+                "1. Responda à dúvida do usuário utilizando ESTRITAMENTE o contexto fornecido abaixo.\n"
+                "2. Se a informação não puder ser confirmada ou deduzida pelo contexto, diga educadamente que essa informação não consta na transcrição.\n"
+                "3. Sempre especifique na resposta, quando relevante, de quem é a posição, pergunta ou encaminhamento (ex: 'O cliente solicitou...', 'A TOTVS informou...').\n\n"
+                "Responda de forma objetiva e concisa."
+                "Não faça análises extensas."
                 "--- CONTEXTO DA REUNIÃO #{meeting_id} ---\n"
                 "{context}\n"
                 "------------------------------------------"

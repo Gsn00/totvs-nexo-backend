@@ -13,6 +13,8 @@ origins = [
     "http://localhost",
     "http://localhost:5173",
     "http://localhost:5173/*",
+    "https://totvs-nexo-frontend-production.up.railway.app",
+    "https://totvs-nexo-frontend-production.up.railway.app/*",
 ]
 
 app.add_middleware(

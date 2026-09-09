@@ -202,6 +202,8 @@ def process_meeting(meeting_id: int, transcription: str, db: Session):
 
         meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
         meeting.participants = analysis_result["participants"]
+        meeting.totvs_speakers = analysis_result["totvsSpeakers"]
+        meeting.client_speakers = analysis_result["clientSpeakers"]
         meeting.status = MeetingStatus.COMPLETED
         
         # Log de sucesso com tempo de execução

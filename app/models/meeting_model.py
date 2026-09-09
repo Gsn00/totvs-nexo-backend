@@ -14,6 +14,8 @@ class Meeting(Base):
     title: Mapped[str] = mapped_column(nullable=False)
     date: Mapped[date] = mapped_column(Date, nullable=False)
     participants: Mapped[dict] = mapped_column(JSON, default=[])
+    totvs_speakers: Mapped[dict] = mapped_column(JSON, default=[])
+    client_speakers: Mapped[dict] = mapped_column(JSON, default=[])
     status: Mapped[MeetingStatus] = mapped_column(nullable=False, default=MeetingStatus.PROCESSING)
     errorMessage: Mapped[Optional[str]] = mapped_column(nullable=True)
     user_id: Mapped[int] = mapped_column(nullable=False)

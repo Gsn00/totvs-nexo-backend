@@ -35,7 +35,7 @@ class MeetingAnalysisSchema(BaseModel):
     clientSpeakers: List[str] = Field(description="Lista de locutores do cliente identificados. Quero apenas a identificação do locutor identico ao documento original, ex: LOCUTOR 1, LOCUTOR 2, etc. Não quero o nome real do funcionário do cliente")
     upsellOpportunities: List[str] = Field(description="Lista de oportunidades de upsell identificadas")
     churnRisk: int = Field(description="Score de 0 a 100 do risco de churn do cliente")
-    healthScore: int = Field(description="Score de 0 a 100 da saúde da reunião")
+    healthScore: int = Field(description="Score de 0 a 100 da saúde da reunião. Se o score for baixo, significa que a reunião foi ruim e que o cliente está insatisfeito. Se o score for alto, significa que a reunião foi boa e que o cliente está satisfeito.")
     sentiment: str = Field(description="Sentimento geral: POSITIVE, NEGATIVE ou NEUTRAL (é importante que estejam maiúsculas)")
     transcript: List[TranscriptItemSchema] = Field(description="Apenas as falas cruciais com suas entidades marcadas")
     insights: InsightsSchema = Field(description="Bloco de insights estratégicos")

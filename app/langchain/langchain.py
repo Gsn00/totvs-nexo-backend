@@ -39,7 +39,7 @@ class MeetingAnalysisSchema(BaseModel):
     sentiment: str = Field(description="Sentimento geral: POSITIVE, NEGATIVE ou NEUTRAL (é importante que estejam maiúsculas)")
     transcript: List[TranscriptItemSchema] = Field(description="Apenas as falas cruciais com suas entidades marcadas")
     insights: InsightsSchema = Field(description="Bloco de insights estratégicos")
-    sentimentData: List[SentimentPointSchema] = Field(description="Lista de pontos estratégicos para o gráfico de humor. Gere um ponto para cada mudança de humor e assunto tratado na reunião, o ideal seria algo próximo de 10 pontos, mas se não for possível, gere entre 5 e 15 pontos. O primeiro ponto deve ser 'Início da Reunião' e o último ponto deve ser 'Fechamento da Reunião'. ")
+    sentimentData: List[SentimentPointSchema] = Field(description="Lista de pontos estratégicos para o gráfico de humor. Gere um ponto para cada mudança de humor ou assunto tratado na reunião, o ideal seria no mínimo 10 pontos, mas se não for possível, gere no mínimo 5 mas nunca invente nada. Quanto mais pontos, melhor, mas evite ultrapassar 20 pontos. O primeiro ponto deve ser 'Início da Reunião' e o último ponto deve ser 'Fechamento da Reunião'.")
 
 class NexoEngine:
     def __init__(self, model_name: str = "gemini-3.6-flash"):
@@ -53,13 +53,13 @@ class NexoEngine:
     def analyze_transcription(self, cleaned_text: str) -> MeetingAnalysisSchema:
         prompt_template = ChatPromptTemplate.from_messages([
             ("system", (
-                "Você é um analista comercial sênior da TOTVS. "
-                "Sua missão é minerar uma transcrição e extrair inteligência acionável. "
+                "Você é um analista comercial sênior da TOTVS."
+                "Sua missão é minerar uma transcrição e extrair inteligência acionável."
                 "Ao gerar o 'sentimentData', siga estas regras:\n"
                 "1. O primeiro label (0%) deve conter time: 0% e label: 'Início da Reunião' e alguma informação relevante sobre o humor dos participantes.\n"
                 "2. O último label (100%) deve conter time: 100% e label: 'Fechamento da Reunião' e alguma informação relevante sobre o resultado da reunião.\n"
                 "3. Use porcentagens (ex: '25%', '50%') para os pontos intermediários.\n"
-                "4. Para gerar a quantidade de pontos necessária, mapeie os momentos mais críticos de mudança de humor e assuntos na conversa.\n"
+                "4. Para gerar a quantidade de pontos necessária, mapeie os momentos de mudança de humor e assuntos na conversa. O ideal seria no mínimo 10 pontos, mas se não for possível, gere no mínimo 5 mas nunca invente nada. Quanto mais pontos, melhor, mas evite ultrapassar 20 pontos.\n"
                 "No campo 'transcript', inclua APENAS as falas que contêm entidades importantes (competitor, product, role, painPoint, churnRisk). As falas devem ser majoritariamente do cliente, com foco em informações estratégicas e com textos não muito longos.\n "
                 "O transcript contém speaker, text e entities. As entities devem ser extraídas do texto, não inventadas. Ex: se o locutor fala 'A Senior é uma concorrente da TOTVS', a entity deve ser 'type': 'competitor', 'text': 'Senior'.\n "
                 "Se alguma lista de output estiver vazia, retorne uma lista vazia.\n "
